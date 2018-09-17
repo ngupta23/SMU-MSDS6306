@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ### Problem 1
-####Commands to clone awesome-public-datasets Github repo <br />?
+####Commands to clone awesome-public-datasets Github repo <br />
 
 mkdir Week3 <br /> 
 cd Week3/ <br /> 
@@ -19,7 +19,7 @@ git clone https://github.com/awesomedata/awesome-public-datasets.git <br />
 
 
 ```{r Problem 2}
-
+## Problem 2
 ## 2A ##
 df <- read.csv("awesome-public-datasets/Datasets/titanic.csv/titanic.csv") # read file from relative path 
 
@@ -32,7 +32,7 @@ head(df)
 sex <- table(df$Sex)
 print ("Breakdown by Sex:")
 print (sex)
-barplot(sex, main = "Breakdown by Sex", xlab = "Sex", ylab = "Count") ## need to add titles, etc
+barplot(sex, main = "Breakdown by Sex", xlab = "Sex", ylab = "Count") 
 
 ## 2C
 # Check for misssing values
@@ -45,6 +45,8 @@ sapply(df[,c('Age','Fare','Survived')], mean, na.rm=TRUE) # Find the means remov
 ```
 
 ```{r Problem 3}
+## Problem 3
+
 sleep <- read.csv("HW3/sleep_data_01.csv")
 str(sleep) #EDA to get variable names
 
@@ -75,27 +77,27 @@ helper(sleep)
 
 
 ```{r Problem 4}
-
-# 4A
+## Problem 4
+## 4A
 #install.packages("fivethirtyeight") # uncomment if not already installed; you can leave it commented if you have already installed it
 library(fivethirtyeight)
 
-#4B
+## 4B
 # To see a list of all data sets:
 alldata <- data(package = "fivethirtyeight")
 
 # Explore what data gets returned 
 str(alldata)
-alldata$results[22,] # Chrck out the 22nd item
+alldata$results[22,] # Check out the 22nd item
 
 data("college_recent_grads", package = 'fivethirtyeight') # Download 22nd dataset
 df <- college_recent_grads # reassign to dataframe called 'df'
 
-# 4C
+## 4C
 vignette("fivethirtyeight", package = "fivethirtyeight") # To see more detailed list of the dataset
 # News Story URL: https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/
 
-# 4D
+## 4D
 dim(df) # Dimensions of dataframe
 colnames(df) # Column names of dataframe
 
@@ -103,17 +105,18 @@ colnames(df) # Column names of dataframe
 ```
 
 ```{r Problem 5}
-# 5A
+## Problem 5
+## 5A
 # Columns names have already been mentioned above so not repeating again.
 length(colnames(df)) # Count the nuber of columns
 
-# 5B
+## 5B
 major_count <- table(df$major_category)
 major_count
  
-# 5C
+## 5C
 par(las=2)
-?college_recent_grads # Getmore detail on dataset
+# ?college_recent_grads # uncomment to get more details on dataset  
 # Plot barplot; Column Labels dont need to be added since they will be picked from the column names by default.
 barplot(major_count, horiz = TRUE, col = rainbow(20)
         ,main = 'Count of Majors in each Catrgory'
@@ -121,8 +124,7 @@ barplot(major_count, horiz = TRUE, col = rainbow(20)
         ,ylab = "Category of major from Carnevale et al"
         )
 
-
-# 5D 
+## 5D 
 write.csv(df,file = "CollegeMajors.csv", row.names = FALSE) # writes to directory in which Rmd is stored
 
 ```
