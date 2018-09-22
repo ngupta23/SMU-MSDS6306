@@ -1,0 +1,177 @@
+---
+title: "NGupta_HW4"
+author: "Nikhil Gupta"
+date: "September 19, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load all required Libraries
+library(rvest)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+sessionInfo()
+```
+
+#1. Harry Potter Cast (50%)
+
+###1a
+In the IMDB, there are listings of full cast members for movies. Navigate to http://www.imdb.com/title/tt1201607/fullcredits?ref_=tt_ql_1. Feel free to View Source to get a good idea of what the page looks like in code.
+
+###1b 
+Scrape the page with any R package that makes things easy for you. Of particular interest is the table of the Cast in order of crediting. Please scrape this table (you might have to fish it out of several of the tables from the page) and make it a data.frame() of the Cast in your R environment
+
+```{r}
+# Adapted from https://www.analyticsvidhya.com/blog/2017/03/beginners-guide-on-web-scraping-in-r-using-rvest-with-hands-on-knowledge/
+
+url <- "http://www.imdb.com/title/tt1201607/fullcredits?ref_=tt_ql_1"
+webpage <- read_html(url)
+cast_html <- html_nodes(webpage,'.cast_list td')
+
+#Converting the names to text
+cast <- html_text(cast_html)
+
+#EDA
+str(cast)
+# This is a string vector. This will be cleaned up and converted to a dataframe in 1c
+```
+
+###1c
+Clean up the table
+
+  * It should not have blank observations or rows, a row that should be column names, or just "..."
+  * It should have intuitive column names (ideally 2 to start  - Actor and Character)
+  * In the film, Mr. Warwick plays two characters, which makes his row look a little weird. Please replace his character column with just "Griphook / Professor Filius Flitwick" to make it look better.
+  * One row might result in "Rest of cast listed alphabetically" - remove this observation.
+
+```{r}
+# (1) change all wierd entries to "". This will be cleaned up later
+cast <- gsub("\n          ","",cast)
+cast <- gsub("    ...","",cast)
+cast <- gsub("\n ","",cast)
+
+# (2) remove leading and trailing white spaces
+cast <- gsub("^ +","",cast) # remove leading white spaces
+cast <- gsub(" +$","",cast) # remove trailing white spaces
+
+# (3) remove all empty entries and header in middle of the table
+cast <- cast[cast != ""] # remove empty entries
+cast <- cast[cast != "Rest of cast listed alphabetically:"] # remove header
+
+# check the results
+head(cast)
+str(cast)
+
+# separate vector into Actor and Character
+odd <- seq(1,length(cast),2)
+even <- seq(2,length(cast),2)
+Actor <- cast[odd]
+Character <- cast[even]
+data <- data.frame(Actor,Character, stringsAsFactors = FALSE)
+
+# clean up entry
+data[Actor == 'Warwick Davis','Character'] <- 'Griphook / Professor Filius Flitwick'
+
+# Check the results
+str(data)
+head(data,10)
+
+
+```
+
+###1d
+Split the Actor's name into two columns: FirstName and Surname. Keep in mind that some actors/actresses have middle names as well. Please make sure that the middle names are in the FirstName column, in addition to the first name (example: given the Actor Frank Jeffrey Stevenson, the FirstName column would say "Frank Jeffrey".)
+
+```{r}
+# regular expression below splits on the final space only 
+# adapted from https://stackoverflow.com/questions/19959697/split-string-by-final-space-in-r
+cast <- data %>% separate(col = Actor, into = c("FirstName", "Surname"), sep = " (?=[^ ]+$)")
+# check that the split happened correctly
+data[c(12,36,78,81,86, 95, 107, 111, 115, 116),c('Actor')] 
+cast[c(12,36,78,81,86, 95, 107, 111, 115, 116),c('FirstName','Surname')]
+```
+
+###1e
+Present the first 10 rows of the data.frame() - It should have only FirstName, Surname, and Character columns.
+
+```{r}
+head(cast,10) # Print the 1st 10 rows
+```
+
+
+#2. SportsBall (50%)
+
+###2a
+On the ESPN website, there are statistics of each NBA player. Navigate to the San Antonio Spurs current statistics (likely http://www.espn.com/nba/team/stats/_/name/sa/san-antonio-spurs). You are interested in the Shooting Statistics table.
+
+###2b
+Scrape the page with any R package that makes things easy for you. There are a few tables on the page, so make sure you are targeting specifically the Shooting Statistics table.
+
+```{r}
+# Adapted from https://www.r-bloggers.com/using-rvest-to-scrape-an-html-table/
+url <- "http://www.espn.com/nba/team/stats/_/name/sa/san-antonio-spurs"
+webpage <- read_html(url)
+
+shooting.stats <- webpage %>%
+  html_nodes(xpath='//*[@id="my-players-table"]/div[4]/div[3]/table') %>%
+  html_table()
+
+shooting.stats <- shooting.stats[[1]]
+
+# Exploratory Analysis
+str(shooting.stats)
+
+```
+
+###2c
+Clean up the table (You might get some warnings if you are working with tibbles) 
+
+  * You will want to create an R data.frame() with one observation for each player. Make sure that you do not accidentally include blank rows, a row of column names, or the Totals row in the table as observations.
+  * The column PLAYER has two variables of interest in it: the player's name and their position, denoted by 1-2 letters after their name. Split the cells into two columns, one with Name and the other Position.
+  * Check the data type of all columns. Convert relevant columns to numeric. Check the data type of all columns again to confirm that they have changed!
+
+```{r}
+shooting.stats <-  shooting.stats[-1,] # remove 1st row which contains the table name in all columns
+
+# The new 1st row now contains the actual column names
+# Set the column names appropriately
+column.names <- shooting.stats[1,] 
+shooting.stats <-  shooting.stats[-1,] 
+colnames(shooting.stats) <- column.names
+
+# Last row contains total. Remove this
+shooting.stats <- filter(shooting.stats, PLAYER != 'Totals')
+
+# Split PLAYER into Name and Position
+shooting.stats <- shooting.stats %>% separate(col = PLAYER, into = c("Name", "Position"), sep = ",")
+
+# Check and convert data types to numeric as needed
+str(shooting.stats)
+shooting.stats[,-c(1,2)] <- as.data.frame(sapply(shooting.stats[,-c(1,2)], as.numeric))
+str(shooting.stats)
+```
+
+
+###2d 
+Create a colorful bar chart that shows the Field Goals Percentage Per Game for each person. It will be graded on the following criteria.
+  
+  * Informative Title, centered
+  * Relevant x and y axis labels (not simply variables names!)
+  * Human-readable axes with no overlap (you might have to flip x and y to fix that). Note: You do not have to convert the decimal to a percentage.
+  * Color the columns by the team member's position (so, all PF's should have the same color, etc.)
+
+```{r}
+pl <- ggplot(shooting.stats, aes(x=Name,y=`FG%`,color=Position, fill=Position)) + geom_bar(stat="identity") +
+  ggtitle("Field Goal % per Game by Player (San Antonio Spurs)") + xlab("Player Name") + ylab("Field Goal % per Game") +
+  coord_flip() 
+print (pl)
+
+```
